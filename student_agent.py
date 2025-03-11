@@ -4,7 +4,6 @@ import pickle
 import random
 import gym
 from tqdm import tqdm
-from simple_custom_taxi_env import SimpleTaxiEnv
 
 # def get_action(obs):
     
