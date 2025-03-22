@@ -30,7 +30,8 @@ def state_to_key(obs):
     grid_size = obs[9] + 1  # destiantion B position
     relative_row = (obs[0]*10) // grid_size
     relative_col = (obs[1]*10) // grid_size
-    return (relative_row, relative_col, obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look, destination_look)
+    # return (relative_row, relative_col, obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look, destination_look)
+    return (obstacle_north, obstacle_south, obstacle_east, obstacle_west)
 
 
 def train_q_learning():
@@ -39,7 +40,7 @@ def train_q_learning():
     env = SimpleTaxiEnv(fuel_limit=5000, grid_size=grid_size)
     total_total_reward = 0
     epsilon = epsilon_start
-    
+    print(epsilon, gamma)
     for episode in tqdm(range(num_episodes)):
         state, _ = env._reset()
         done = False
@@ -71,7 +72,7 @@ def train_q_learning():
             state = next_state
         
         epsilon *= gamma
-        epsilon = max(0.1, epsilon_end)
+        epsilon = max(epsilon, epsilon_end)
         total_total_reward += total_reward
 
         if (episode + 1) % 500 == 0:
@@ -159,11 +160,11 @@ if __name__ == "__main__":
     parser.add_argument('--alpha', type=float, default=0.1, help='Learning rate')
     parser.add_argument('--gamma', type=float, default=0.999, help='Discount factor')
     parser.add_argument('--epsilon_start', type=float, default=1.0, help='Exploration rate')
-    parser.add_argument('--epsilon_end', type=float, default=0.1, help='Exploration rate')
+    parser.add_argument('--epsilon_end', type=float, default=0.025, help='Exploration rate')
     args = parser.parse_args()
 
     # Update hyperparameters with parsed arguments
-    global num_episodes, alpha, gamma, epsilon_startm, epsilon_end, nnModel
+    global num_episodes, alpha, gamma, epsilon_start, epsilon_end, nnModel
     num_episodes = args.episodes
     alpha = args.alpha
     gamma = args.gamma

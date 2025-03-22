@@ -20,7 +20,8 @@ class TabularModel:
         grid_size = obs[9] + 1  # destiantion B position
         relative_row = (obs[0]*10) // grid_size
         relative_col = (obs[1]*10) // grid_size
-        return (relative_row, relative_col, obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look, destination_look)
+        # return (relative_row, relative_col, obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look, destination_look)
+        return (obstacle_north, obstacle_south, obstacle_east, obstacle_west)
 
     def get_action(self, obs):
         key = self.state_to_key(obs)
