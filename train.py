@@ -34,13 +34,14 @@ def state_to_key(obs):
 
 
 def train_q_learning():
-    global Q_table, gamma, alpha, epsilon
+    global Q_table, gamma, alpha, num_episodes, epsilon_start, epsilon_end
     grid_size = random.randint(5, 10)
     env = SimpleTaxiEnv(fuel_limit=5000, grid_size=grid_size)
     total_total_reward = 0
+    epsilon = epsilon_start
     
     for episode in tqdm(range(num_episodes)):
-        state, _ = env.reset()
+        state, _ = env._reset()
         done = False
         total_reward = 0
         
@@ -70,12 +71,14 @@ def train_q_learning():
             state = next_state
         
         epsilon *= gamma
-        epsilon = max(0.1, epsilon)
+        epsilon = max(0.1, epsilon_end)
         total_total_reward += total_reward
 
         if (episode + 1) % 500 == 0:
-            print(f"Episode {episode+1}/{num_episodes} completed. Average reward: {total_total_reward / 500}")
+            print(f"Episode {episode+1}/{num_episodes} completed. Average reward: {total_total_reward / 500}, epsilon: {epsilon}")
             total_total_reward = 0
+            with open("q_table.pkl", "wb") as f:
+                pickle.dump(Q_table, f)
 
 
 def train_nn(model: NNModel, num_episodes, grid=5, max_steps=5000, gamma=0.99):
@@ -154,16 +157,18 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, required=True, help='Model type: q_learning or nn')
     parser.add_argument('--episodes', type=int, default=5000, help='Number of training episodes')
     parser.add_argument('--alpha', type=float, default=0.1, help='Learning rate')
-    parser.add_argument('--gamma', type=float, default=0.99, help='Discount factor')
-    parser.add_argument('--epsilon', type=float, default=0.2, help='Exploration rate')
+    parser.add_argument('--gamma', type=float, default=0.999, help='Discount factor')
+    parser.add_argument('--epsilon_start', type=float, default=1.0, help='Exploration rate')
+    parser.add_argument('--epsilon_end', type=float, default=0.1, help='Exploration rate')
     args = parser.parse_args()
 
     # Update hyperparameters with parsed arguments
-    global num_episodes, alpha, gamma, epsilon, nnModel
+    global num_episodes, alpha, gamma, epsilon_startm, epsilon_end, nnModel
     num_episodes = args.episodes
     alpha = args.alpha
     gamma = args.gamma
-    epsilon = args.epsilon
+    epsilon_start = args.epsilon_start
+    epsilon_end = args.epsilon_end
     if args.model == 'q_learning':
         print("訓練 Q-learning agent...")
         train_q_learning()
