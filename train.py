@@ -155,7 +155,7 @@ def get_action(obs, model):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a agent for SimpleTaxiEnv.")
-    parser.add_argument('--model', type=str, required=True, help='Model type: q_learning or nn')
+    parser.add_argument('--model', type=str, default='q_learning', help='Model type: q_learning or nn')
     parser.add_argument('--episodes', type=int, default=5000, help='Number of training episodes')
     parser.add_argument('--alpha', type=float, default=0.1, help='Learning rate')
     parser.add_argument('--gamma', type=float, default=0.999, help='Discount factor')
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     
     # 可進行一次測試執行
     env = SimpleTaxiEnv(fuel_limit=5000)
-    obs, _ = env.reset()
+    obs, _ = env._reset()
     total_reward = 0
     done = False
     step_count = 0
