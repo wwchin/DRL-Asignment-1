@@ -36,12 +36,12 @@ def state_to_key(obs):
 
 def train_q_learning():
     global Q_table, gamma, alpha, num_episodes, epsilon_start, epsilon_end
-    grid_size = random.randint(5, 10)
-    env = SimpleTaxiEnv(fuel_limit=5000, grid_size=grid_size)
     total_total_reward = 0
     epsilon = epsilon_start
     print(epsilon, gamma)
     for episode in tqdm(range(num_episodes)):
+        grid_size = random.randint(5, 10)
+        env = SimpleTaxiEnv(fuel_limit=5000, grid_size=grid_size)
         state, _ = env.reset()
         done = False
         total_reward = 0
