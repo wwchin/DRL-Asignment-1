@@ -1,20 +1,13 @@
-import gym
-import numpy as np
-import importlib.util
 import time
-from IPython.display import clear_output
+import math
+import heapq
 import random
-# This environment allows you to verify whether your program runs correctly during testing, 
-# as it follows the same observation format from `env.reset()` and `env.step()`. 
-# However, keep in mind that this is just a simplified environment. 
-# The full specifications for the real testing environment can be found in the provided spec.
-# 
-# You are free to modify this file to better match the real environment and train your own agent. 
-# Good luck!
+import itertools
+import importlib.util
 
 
-class SimpleTaxiEnv():
-    def __init__(self, grid_size=5, fuel_limit=50):
+class SimpleTaxiEnv:
+    def __init__(self, grid_size=20, fuel_limit=50, obs_ratio=0.1):
         """
         Custom Taxi environment supporting different grid sizes.
         """
@@ -22,18 +15,35 @@ class SimpleTaxiEnv():
         self.fuel_limit = fuel_limit
         self.current_fuel = fuel_limit
         self.passenger_picked_up = False
-        
-        self.stations = [(0, 0), (0, self.grid_size - 1), (self.grid_size - 1, 0), (self.grid_size - 1, self.grid_size - 1)]
         self.passenger_loc = None
-       
-        self.obstacles = set()  # No obstacles in simple version
         self.destination = None
+        self.obs_ratio = obs_ratio
+
+    def _generate_stations(self, num_stations=4):
+        all_positions = [
+            (i, j) for i in range(self.grid_size) for j in range(self.grid_size)
+        ]
+        random.shuffle(all_positions)
+        
+        return all_positions[:num_stations]
+
+    def _generate_obstacles(self, obs_ratio):
+        total_cells = self.grid_size * self.grid_size
+        num_obstacles = int(total_cells * obs_ratio)
+        all_positions = [
+            (i, j) for i in range(self.grid_size) for j in range(self.grid_size)
+        ]
+        random.shuffle(all_positions)
+        return all_positions[:num_obstacles]
 
     def reset(self):
         """Reset the environment, ensuring Taxi, passenger, and destination are not overlapping obstacles"""
         self.current_fuel = self.fuel_limit
         self.passenger_picked_up = False
-        
+
+        self.stations = self._generate_stations()
+        self.obstacles = self._generate_obstacles(self.obs_ratio)
+        self.obstacles = list(set(self.obstacles) - set(self.stations))
 
         available_positions = [
             (x, y) for x in range(self.grid_size) for y in range(self.grid_size)
@@ -41,15 +51,13 @@ class SimpleTaxiEnv():
         ]
 
         self.taxi_pos = random.choice(available_positions)
-        
-        self.passenger_loc = random.choice([pos for pos in self.stations])
-        
-        
-        possible_destinations = [s for s in self.stations if s != self.passenger_loc]
-        self.destination = random.choice(possible_destinations)
-        
-        return self.get_state(), {}
 
+        self.passenger_loc = random.choice([pos for pos in self.stations])
+
+        self.destination = random.choice([s for s in self.stations if s != self.passenger_loc])
+
+        return self.get_state(), {}
+    
     def step(self, action):
         """Perform an action and update the environment state."""
         taxi_row, taxi_col = self.taxi_pos
@@ -176,47 +184,37 @@ class SimpleTaxiEnv():
         return actions[action] if action is not None else "None"
 
 
-def run_agent(agent_file, env_config, render=False):
-    spec = importlib.util.spec_from_file_location("student_agent", agent_file)
+if __name__ == "__main__":
+    # import function "get_action" from "student_agent.py"
+    spec = importlib.util.spec_from_file_location("student_agent", "student_agent.py")
     student_agent = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(student_agent)
 
-    env = SimpleTaxiEnv(**env_config)
-    obs, _ = env.reset()
-    total_reward = 0
-    done = False
-    step_count = 0
-    stations = [(0, 0), (0, 4), (4, 0), (4,4)]
-    
-    taxi_row, taxi_col, _,_,_,_,_,_,_,_,obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look, destination_look = obs
+    total_total_reward = 0
+    for _ in range(100):
+        # build the taxi environment
+        env_config = {"grid_size": 10, "fuel_limit": 5000, "obs_ratio": 0.15}
+        env = SimpleTaxiEnv(**env_config)
+        obs, _ = env.reset()
 
-    if render:
-        env.render_env((taxi_row, taxi_col),
-                       action=None, step=step_count, fuel=env.current_fuel)
-        time.sleep(0.5)
-    while not done:
-        
-        
-        action = student_agent.get_action(obs)
+        # run the agent
+        step_count, total_reward, done = 0, 0, False
+        while not done:
+            # time.sleep(1)
+            action = student_agent.get_action(obs)
+            obs, reward, done, _ = env.step(action)
+            # print(f"obs : {obs}")
+            total_reward += reward
+            step_count += 1
+            # render
+            taxi_row, taxi_col = obs[0], obs[1]
+            # env.render_env(
+            #     (taxi_row, taxi_col),
+            #     action=action,
+            #     step=step_count,
+            #     fuel=env.current_fuel,
+            # )
 
-        obs, reward, done, _ = env.step(action)
-        print('obs=',obs)
-        total_reward += reward
-        step_count += 1
-
-        taxi_row, taxi_col, _,_,_,_,_,_,_,_,obstacle_north, obstacle_south, obstacle_east, obstacle_west, passenger_look,destination_look = obs
-
-        if render:
-            env.render_env((taxi_row, taxi_col),
-                           action=action, step=step_count, fuel=env.current_fuel)
-
-    print(f"Agent Finished in {step_count} steps, Score: {total_reward}")
-    return total_reward
-
-if __name__ == "__main__":
-    env_config = {
-        "fuel_limit": 5000
-    }
-    
-    agent_score = run_agent("student_agent.py", env_config, render=True)
-    print(f"Final Score: {agent_score}")
+        print(f"Agent Finished in {step_count} steps, Score: {total_reward}")
+        total_total_reward += total_reward
+    print(f"Average Score: {total_total_reward / 100}")

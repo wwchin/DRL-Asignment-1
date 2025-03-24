@@ -42,7 +42,7 @@ def train_q_learning():
     epsilon = epsilon_start
     print(epsilon, gamma)
     for episode in tqdm(range(num_episodes)):
-        state, _ = env._reset()
+        state, _ = env.reset()
         done = False
         total_reward = 0
         
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     
     # 可進行一次測試執行
     env = SimpleTaxiEnv(fuel_limit=5000)
-    obs, _ = env._reset()
+    obs, _ = env.reset()
     total_reward = 0
     done = False
     step_count = 0
